@@ -131,3 +131,32 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+taxi_zones/taxi_zones.shx
+taxi_zones/taxi_zones.shp.xml
+taxi_zones/taxi_zones.shp
+taxi_zones/taxi_zones.sbx
+taxi_zones/taxi_zones.sbn
+taxi_zones/taxi_zones.prj
+taxi_zones/taxi_zones.dbf
+taxi/Yellow_Taxi_Trip_Data_9_2018.csv
+taxi/Yellow_Taxi_Trip_Data_8_2018.csv
+taxi/Yellow_Taxi_Trip_Data_7_2018.csv
+taxi/Yellow_Taxi_Trip_Data_6_2018.csv
+taxi/Yellow_Taxi_Trip_Data_5_2018.csv
+taxi/Yellow_Taxi_Trip_Data_4_2018.csv
+taxi/Yellow_Taxi_Trip_Data_3_2018.csv
+taxi/Yellow_Taxi_Trip_Data_2_2018.csv
+taxi/Yellow_Taxi_Trip_Data_1_2018.csv
+taxi/Yellow_Taxi_Trip_Data_12_2018.csv
+taxi/Yellow_Taxi_Trip_Data_11_2018.csv
+taxi/Yellow_Taxi_Trip_Data_10_2018.csv
+cache/ba47c827960c50922bdb6428cf4fc85613cc2d6a.json
+cache/a024d0081b2c2475e8a73803fb99130566b3ac79.json
+cache/9cdec018cab1b1332c2b609dde0dba57380a7d77.json
+cache/9c80cd51d6105028f0382b3961ccc055ed7bcbed.json
+cache/5bde3b63b71fe6aee63fb693570d20aea8f40dbd.json
+cache/399699cfab28190b02ba5be9c8e8053ffa985e77.json
+cache/2144358ac565868aebddb144637c41ff90813d58.json
+cache/19b0b04851b5d60248ced0897952f749878cc737.json
+cache/0faba3b6af5e9848f495d96c1971c564c9a3fbde.json
+.DS_Store
