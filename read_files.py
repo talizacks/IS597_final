@@ -27,14 +27,15 @@ def read_file(url: str, filename_to_write: str) -> pd.DataFrame:
 # print(pd.read_csv('taxi/Yellow_Taxi_Trip_Data_1_2018.csv'))
 
 
-def combine_taxi_dfs() -> pd.DataFrame:
-    dfs = []
-    for i in range(1,13):
-        df = pd.read_csv(f'taxi/Yellow_Taxi_Trip_Data_{i}_2018.csv', infer_datetime_format=True)
-        dfs.append(df)
-    combined = pd.concat(dfs)
-    combined_sample = combined.sample(n=200000)
-    combined_sample.to_csv('combined_taxi_2018_200k_sample.csv')
-    return combined_sample
+# def combine_taxi_dfs() -> pd.DataFrame:
+#     dfs = []
+#     for i in range(1,13):
+#         df = pd.read_csv(f'taxi/Yellow_Taxi_Trip_Data_{i}_2018.csv', infer_datetime_format=True)
+#         dfs.append(df)
+#     combined = pd.concat(dfs)
+#     combined_sample = combined.sample(n=200000)
+#     combined_sample.to_csv('combined_taxi_2018_200k_sample.csv')
+#     return combined_sample
+#
+# print(sorted(combine_taxi_dfs()))
 
-print(sorted(combine_taxi_dfs()))
