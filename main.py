@@ -46,7 +46,16 @@ def removeWeirdTaxiData():
 
     :return:
     """
-    pass
+    too_quick = trips_df['trip_time_h'] >= 0.01666666667
+    too_long = trips_df['trip_time_h'] <= 24
+    super_fast = trips_df['avg speed'] <= 90
+    super_slow = trips_df['avg speed'] >= 1
+    trips_df = trips_df[too_quick]
+    trips_df = trips_df[too_long]
+    trips_df = trips_df[super_fast]
+    trips_df = trips_df[super_slow]
+
+    return trips_df
 
 if __name__ == '__main__':
     # Load files into pandas dataframes
