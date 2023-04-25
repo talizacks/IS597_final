@@ -161,3 +161,4 @@ cache/19b0b04851b5d60248ced0897952f749878cc737.json
 cache/0faba3b6af5e9848f495d96c1971c564c9a3fbde.json
 .DS_Store
 Motor_Vehicle_Collisions_Crashes.csv
+*.part
