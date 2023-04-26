@@ -30,7 +30,7 @@ def find_neighboring_zones(zone_gdf) -> dict:
     :param zones: taxi zones
     :return:
     """
-    zones = taxi_zones(zone_filename)
+    zones = zone_gdf
     # https://gis.stackexchange.com/questions/281652/finding-all-neighbors-using-geopandas
     neighbor_dict = {}
     for index, zone in zones.iterrows():

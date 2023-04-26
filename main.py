@@ -1,6 +1,7 @@
-import Vis
+# import Vis
 import pandas as pd
 import geopandas as gpd
+import numpy as np
 
 
 def open_file(path: str) -> pd.DataFrame:
@@ -11,7 +12,10 @@ def open_file(path: str) -> pd.DataFrame:
     """
     return pd.read_csv(path)
 
-
+def format_index(df:pd.DataFrame,new_index_name)->pd.DataFrame:
+    df.rename(columns={'Unnamed: 0': new_index_name}, inplace=True)
+    df.set_index(new_index_name)
+    return df
 def keep_relevant_columns(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     """
 
@@ -19,7 +23,7 @@ def keep_relevant_columns(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     :param column_names:
     :return:
     """
-    df = df.loc[:df.columns.isin(column_names)]
+    df = df[column_names]
     return df
 
 def find_neighbors(gdf: gpd.GeoDataFrame) -> dict:
@@ -96,21 +100,30 @@ def datetime_conversions(df: pd.DataFrame, column_names: list, time_format: str)
     for column in column_names:
         df[column] = pd.to_datetime(df[column], format=time_format)
 
-def removeWeirdTaxiData():
+
+def add_time_and_speed(df:pd.DataFrame) -> pd.DataFrame:
+    df['trip_time'] = (df['tpep_dropoff_datetime'] - df['tpep_pickup_datetime'])
+
+    df['trip_time_h'] = [(x.total_seconds()) / 3600 for x in df['trip_time']]
+    df['avg speed'] = df['trip_distance'] / df['trip_time_h']
+    return df
+
+
+def removeWeirdTaxiData(df: pd.DataFrame) -> pd.DataFrame:
     """
 
     :return:
     """
-    too_quick = trips_df['trip_time_h'] >= 0.01666666667
-    too_long = trips_df['trip_time_h'] <= 24
-    super_fast = trips_df['avg speed'] <= 90
-    super_slow = trips_df['avg speed'] >= 1
-    trips_df = trips_df[too_quick]
-    trips_df = trips_df[too_long]
-    trips_df = trips_df[super_fast]
-    trips_df = trips_df[super_slow]
+    too_quick = df['trip_time_h'] >= 0.01666666667
+    too_long = df['trip_time_h'] <= 24
+    super_fast = df['avg speed'] <= 90
+    super_slow = df['avg speed'] >= 1
+    df = df[too_quick]
+    df = df[too_long]
+    df = df[super_fast]
+    df = df[super_slow]
 
-    return trips_df
+    return df
 
 def change_location_to_zones(df, locations_column_names):
     """
@@ -123,21 +136,29 @@ def change_location_to_zones(df, locations_column_names):
 
 if __name__ == '__main__':
     # open file
-    taxi_data = open_file("sampled_combined_taxi_2018_600k.csv")
-    #remove
-    taxi_data = keep_relevant_columns(taxi_data, ['tpep_pickup_datetime', 'tpep_dropoff_datetime', 'trip_distance',
+    taxi_data = format_index(open_file("sampled_combined_taxi_2018_600k.csv"),'tripID')
+
+    # remove taxi columns
+    taxi_data = keep_relevant_columns(taxi_data, ['tripID','tpep_pickup_datetime', 'tpep_dropoff_datetime', 'trip_distance',
                                                   'PULocationID', 'DOLocationID', 'fare_amount', 'tip_amount',
                                                   'tolls_amount', 'total_amount'])
-    #datetime_conversions
+    # datetime_conversions
     taxi_data = datetime_conversions(taxi_data, ['tpep_pickup_datetime', 'tpep_dropoff_datetime'],
                                      '%m-%d-%Y %I:%M:%S %p')
+    taxi_data = add_time_and_speed(taxi_data)
 
+
+    # neighbors and zones
     nyc_taxi_geo = gpd.read_file('NYC_Taxi_Zones.geojson')
+    neighbors = find_neighbors(nyc_taxi_geo)
+    taxi_data = filter_trips_based_on_zones(taxi_data, neighbors)
 
-    #open file
-    crashes_data = open_file("2018_crashes.csv")
-    #remove columns
-    crashes_data = keep_relevant_columns(crashes_data, ['DATE_CRASH', 'TIME', 'LOCATION'])
+
+    # open crashes file
+    crashes_data = format_index(open_file("2018_crashes.csv"), 'index')
+
+    # remove columns
+    crashes_data = keep_relevant_columns(crashes_data, ['index','DATE_CRASH', 'TIME', 'LOCATION'])
     crashes_data['Date-time_of_crash'] = crashes_data[['DATE_CRASH', 'TIME']].agg('-'.join, axis=1)
     crashes_data = datetime_conversions(crashes_data, ['Date-time_of_crash'], '%Y-%m-%d-%H:%M:%S')
 
@@ -149,4 +170,5 @@ if __name__ == '__main__':
                                                               'WORK_START_DATE', 'WORK_END_DATE'])
     #datetime conversions
     street_closures = datetime_conversions(street_closures, ['WORK_START_DATE', 'WORK_END_DATE'], '%Y-%m-%d %H:%M:%S')
+    taxi_data
 
