@@ -1,11 +1,10 @@
 import osmnx as ox
-import osmnx.utils_geo
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import networkx as nx
 
-def map_events_to_zones(nyc_taxi_geo: gpd.geodataframe, crashes: pd.DataFrame, closures: pd.DataFrame):
+def map_events_to_zones(nyc_taxi_geo: gpd.geodataframe, crashes: pd.DataFrame, closures: pd.DataFrame)
     """
     Maps crashes and closures to
     :param nyc_taxi_geo:
@@ -13,13 +12,9 @@ def map_events_to_zones(nyc_taxi_geo: gpd.geodataframe, crashes: pd.DataFrame, c
     :param closures:
     :return:
     """
-    pass
 
-def zone_center(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    gdf['centroid'] = gdf['geometry'].centroid
-    # print(gdf)
-    return gdf
 
+def zone_center():
 
 def plot_routes_for_random_addresses_in_2_zones(gdf: gpd.GeoDataFrame, zone1: int, zone2: int):
     """
