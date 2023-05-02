@@ -6,7 +6,7 @@ from geopandas import GeoDataFrame
 from shapely.geometry import Point
 from shapely import wkt
 import folium
-
+import osmnx as ox
 
 
 def open_file(path: str) -> pd.DataFrame:
@@ -166,6 +166,10 @@ def convert_to_geometry_point(coords, crs):
     geo_point = Point(float(lon), float(lat))
     return geo_point
 
+def get_street_geometry() -> gpd.GeoDataFrame:
+    nyc = ox.graph_from_place('NYC, NY, USA', network_type='drive')
+    g_gdf = ox.graph_to_gdfs(nyc, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=False)
+    return g_gdf
 
 if __name__ == '__main__':
     # open file
@@ -219,10 +223,12 @@ if __name__ == '__main__':
     ###### TRY TO VECTORIZE LATER
 
     #open file
-    street_closures = open_file("2018-street-closures_corrected_names.csv")
+    street_closures = open_file("2018_street_closures.csv")
+
     #remove columns
     street_closures = keep_relevant_columns(street_closures, ['FROMSTREETNAME', 'TOSTREETNAME',
                                                               'WORK_START_DATE', 'WORK_END_DATE'])
     #datetime conversions
     street_closures = datetime_conversions(street_closures, ['WORK_START_DATE', 'WORK_END_DATE'], '%Y-%m-%d %H:%M:%S')
+
 
