@@ -219,7 +219,7 @@ if __name__ == '__main__':
     ###### TRY TO VECTORIZE LATER
 
     #open file
-    street_closures = open_file("2018_street_closures.csv")
+    street_closures = open_file("2018-street-closures_corrected_names.csv")
     #remove columns
     street_closures = keep_relevant_columns(street_closures, ['FROMSTREETNAME', 'TOSTREETNAME',
                                                               'WORK_START_DATE', 'WORK_END_DATE'])
