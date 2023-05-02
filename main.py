@@ -1,8 +1,12 @@
-from Vis import plot_routes_for_random_addresses_in_2_zones
+# import Vis
 import pandas as pd
 import geopandas as gpd
 import numpy as np
+from geopandas import GeoDataFrame
 from shapely.geometry import Point
+from shapely import wkt
+import folium
+
 
 
 def open_file(path: str) -> pd.DataFrame:
@@ -151,6 +155,18 @@ def change_location_to_zones(df, locations_column_names):
     """
 
 
+def convert_to_geometry_point(coords, crs):
+    """
+    Converts a series of strings to a geometry point object
+    :param coords: A string containing the coordinates in the format "(lat, lon)"
+    :param crs: The coordinate reference system of the point
+    :return: A Point object with the specified coordinates and CRS
+    """
+    lat, lon = coords.strip("()").split(", ")
+    geo_point = Point(float(lon), float(lat))
+    return geo_point
+
+
 if __name__ == '__main__':
     # open file
     taxi_data = format_index(open_file("sampled_combined_taxi_2018_600k.csv"),'tripID')
@@ -177,16 +193,29 @@ if __name__ == '__main__':
     # remove columns
     crashes_data = keep_relevant_columns(crashes_data, ['index', 'CRASH DATE_CRASH TIME', 'LOCATION'])
     crashes_data = datetime_conversions(crashes_data, ['CRASH DATE_CRASH TIME'], '%Y-%m-%d %H:%M:%S')
+    crashes_data = crashes_data.dropna()
+
+    # remove rows with no coordinates
+    # crashes_with_coords = crashes_data['LOCATION'].str.startswith("(")
+    # crashes_data = crashes_data.loc[crashes_with_coords]
+
 
     # get zone from coordinates
+    # https://geopandas.org/en/stable/docs/reference/geoseries.html
+    crs = 'EPSG:4326'
     crashes_data['ZONE'] = ''
     taxi_zones = nyc_taxi_geo.zone
     taxi_zones_boundaries = nyc_taxi_geo.geometry.boundary
-    for index, row in crashes_data.iterrows():
-        for index, boundary in taxi_zones_boundaries:
-            print(type(taxi_zones))
-            if row['Location'].within(boundary):
-                row['ZONE'] = boundary.zone  # record zone  in ['ZONE'] column
+    crashes_data['geometry'] = crashes_data['LOCATION'].apply(lambda x: convert_to_geometry_point(x, crs))
+    crashes_data_gdf = gpd.GeoDataFrame(crashes_data, geometry='geometry', crs=crs)
+
+    for i, row in crashes_data_gdf.iterrows():
+        point = row['geometry']
+        for boundary, zone in zip(taxi_zones_boundaries, taxi_zones):
+            if boundary.contains(point):
+                print(zone)
+                crashes_data_gdf.at[i, 'ZONE'] = zone
+                break
     ###### TRY TO VECTORIZE LATER
 
     #open file
@@ -196,5 +225,4 @@ if __name__ == '__main__':
                                                               'WORK_START_DATE', 'WORK_END_DATE'])
     #datetime conversions
     street_closures = datetime_conversions(street_closures, ['WORK_START_DATE', 'WORK_END_DATE'], '%Y-%m-%d %H:%M:%S')
-    taxi_data
 
