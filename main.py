@@ -5,7 +5,7 @@ import numpy as np
 from geopandas import GeoDataFrame
 from shapely.geometry import Point
 from shapely import wkt
-import matplotlib.pyplot as plt
+import folium
 
 
 
@@ -155,36 +155,16 @@ def change_location_to_zones(df, locations_column_names):
     """
 
 
-def convert_to_geometry_point(coords):
+def convert_to_geometry_point(coords, crs):
     """
     Converts a series of strings to a geometry point object
     :param coords: A string containing the coordinates in the format "(lat, lon)"
+    :param crs: The coordinate reference system of the point
     :return: A Point object with the specified coordinates and CRS
     """
     lat, lon = coords.strip("()").split(", ")
     geo_point = Point(float(lon), float(lat))
     return geo_point
-
-
-def find_zone_of_event():
-
-    # https://geopandas.org/en/stable/docs/reference/geoseries.html
-    crashes_data['ZONE'] = ''
-    taxi_zones = nyc_taxi_geo.zone
-    taxi_zones_geo = nyc_taxi_geo.geometry
-    crashes_data['geometry'] = crashes_data['LOCATION'].apply(lambda x: convert_to_geometry_point(x))
-    crashes_data_gdf = gpd.GeoDataFrame(crashes_data, geometry='geometry')
-    crashes_data_gdf.crs = 'EPSG:4326'
-    crashes_data_gdf = crashes_data_gdf.drop(columns=['LOCATION'])
-    # crashes_data_gdf.to_file('crashes.geojson')
-
-    for i, row in crashes_data_gdf.iterrows():
-        point = row['geometry']
-        for boundary, zone in zip(taxi_zones_geo, taxi_zones):
-            if boundary.contains(point):
-                print(zone)
-                crashes_data_gdf.at[i, 'ZONE'] = zone
-                break
 
 
 if __name__ == '__main__':
@@ -209,8 +189,6 @@ if __name__ == '__main__':
 
     # open crashes file
     crashes_data = format_index(open_file("2018_crashes.csv"), 'index')
-    crashes_data = crashes_data.loc[(crashes_data['LATITUDE'] >= 39) & (crashes_data['LATITUDE'] <= 41) & (
-                crashes_data['LONGITUDE'] >= -74.5) & (crashes_data['LONGITUDE'] <= -72)]
 
     # remove columns
     crashes_data = keep_relevant_columns(crashes_data, ['index', 'CRASH DATE_CRASH TIME', 'LOCATION'])
@@ -224,18 +202,16 @@ if __name__ == '__main__':
 
     # get zone from coordinates
     # https://geopandas.org/en/stable/docs/reference/geoseries.html
+    crs = 'EPSG:4326'
     crashes_data['ZONE'] = ''
     taxi_zones = nyc_taxi_geo.zone
-    taxi_zones_geo = nyc_taxi_geo.geometry
-    crashes_data['geometry'] = crashes_data['LOCATION'].apply(lambda x: convert_to_geometry_point(x))
-    crashes_data_gdf = gpd.GeoDataFrame(crashes_data, geometry='geometry')
-    crashes_data_gdf.crs = 'EPSG:4326'
-    crashes_data_gdf = crashes_data_gdf.drop(columns=['LOCATION'])
-    # crashes_data_gdf.to_file('crashes.geojson')
+    taxi_zones_boundaries = nyc_taxi_geo.geometry.boundary
+    crashes_data['geometry'] = crashes_data['LOCATION'].apply(lambda x: convert_to_geometry_point(x, crs))
+    crashes_data_gdf = gpd.GeoDataFrame(crashes_data, geometry='geometry', crs=crs)
 
     for i, row in crashes_data_gdf.iterrows():
         point = row['geometry']
-        for boundary, zone in zip(taxi_zones_geo, taxi_zones):
+        for boundary, zone in zip(taxi_zones_boundaries, taxi_zones):
             if boundary.contains(point):
                 print(zone)
                 crashes_data_gdf.at[i, 'ZONE'] = zone

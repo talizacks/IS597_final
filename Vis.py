@@ -4,7 +4,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import networkx as nx
 
-def map_events_to_zones(nyc_taxi_geo: gpd.geodataframe, crashes: pd.DataFrame, closures: pd.DataFrame)
+def map_events_to_zones(nyc_taxi_geo: gpd.GeoDataFrame, crashes: pd.DataFrame, closures: pd.DataFrame)
     """
     Maps crashes and closures to
     :param nyc_taxi_geo:
@@ -27,12 +27,12 @@ def plot_routes_for_random_addresses_in_2_zones(gdf: gpd.GeoDataFrame, zone1: in
 
     gdf.geometry.to_crs(4326)
     zone1_bbox = gdf.loc[gdf['objectid'] == str(zone1)]['geometry'].item()
-    g_z1 = ox.graph_from_polygon(zone1_bbox,network_type='drive',retain_all=True)
+    g_z1 = ox.graph_from_polygon(zone1_bbox, network_type='drive', retain_all=True)
     g_z1 = ox.utils_graph.get_undirected(g_z1)
     random_address_z1 = ox.utils_geo.sample_points(g_z1, 1).to_crs(4326)
 
     zone2_bbox = gdf.loc[gdf['objectid'] == str(zone2)]['geometry'].item()
-    g_z2 = ox.graph_from_polygon(zone2_bbox)
+    g_z2 = ox.graph_from_polygon(zone2_bbox, network_type='drive', retain_all=True)
     g_z2 = ox.utils_graph.get_undirected(g_z2)
     random_address_z2 = ox.utils_geo.sample_points(g_z2, 1).to_crs(4326)
 
@@ -58,7 +58,7 @@ def plot_routes_for_random_addresses_in_2_zones(gdf: gpd.GeoDataFrame, zone1: in
 
     random_address_z1.plot(color='r', ax=ax)
     random_address_z2.plot(color='b', ax=ax)
-    return
+    return ax
 
 def events_during_trips(trips, crashes, closures):
     """
