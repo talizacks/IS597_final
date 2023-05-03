@@ -166,6 +166,22 @@ def convert_to_geometry_point(coords, crs):
     geo_point = Point(float(lon), float(lat))
     return geo_point
 
+def add_zone_of_event():
+    crs = 'EPSG:4326'
+    crashes_data['ZONE'] = ''
+    taxi_zones = nyc_taxi_geo.zone
+    taxi_zones_boundaries = nyc_taxi_geo.geometry
+    crashes_data['geometry'] = crashes_data['LOCATION'].apply(lambda x: convert_to_geometry_point(x, crs))
+    crashes_data_gdf = gpd.GeoDataFrame(crashes_data, geometry='geometry', crs=crs)
+
+    for i, row in crashes_data_gdf.iterrows():
+        point = row['geometry']
+        for boundary, zone in zip(taxi_zones_boundaries, taxi_zones):
+            if boundary.contains(point):
+                print(zone)
+                crashes_data_gdf.at[i, 'ZONE'] = zone
+                break
+
 
 if __name__ == '__main__':
     # open file
@@ -205,7 +221,7 @@ if __name__ == '__main__':
     crs = 'EPSG:4326'
     crashes_data['ZONE'] = ''
     taxi_zones = nyc_taxi_geo.zone
-    taxi_zones_boundaries = nyc_taxi_geo.geometry.boundary
+    taxi_zones_boundaries = nyc_taxi_geo.geometry
     crashes_data['geometry'] = crashes_data['LOCATION'].apply(lambda x: convert_to_geometry_point(x, crs))
     crashes_data_gdf = gpd.GeoDataFrame(crashes_data, geometry='geometry', crs=crs)
 
