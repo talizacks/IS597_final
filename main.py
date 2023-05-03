@@ -4,7 +4,7 @@ import geopandas as gpd
 import numpy as np
 from geopandas import GeoDataFrame
 from shapely.geometry import Point
-from shapely import wkt
+from shapely import wkt, LineString
 import folium
 
 
@@ -146,41 +146,45 @@ def removeWeirdTaxiData(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def change_location_to_zones(df, locations_column_names):
-    """
 
-    :param df:
-    :param locations_column_names:
-    :return:
-    """
-
-
-def convert_to_geometry_point(coords, crs):
+def convert_to_geometry_point(coords):
     """
     Converts a series of strings to a geometry point object
     :param coords: A string containing the coordinates in the format "(lat, lon)"
-    :param crs: The coordinate reference system of the point
     :return: A Point object with the specified coordinates and CRS
     """
-    lat, lon = coords.strip("()").split(", ")
-    geo_point = Point(float(lon), float(lat))
+    if coords.startswith('LINESTRING'):
+        coords = coords.replace("LINESTRING (", "").replace(")", "")
+        coords = [tuple(map(float, c.split())) for c in coords.split(",")]
+        multipoint = [(float(lon), float(lat)) for lon, lat in coords]
+        geo_point = LineString(multipoint)
+    elif type(coords) == str:
+        lat, lon = coords.strip("()").split(',')
+        geo_point = Point(float(lon), float(lat))
+    else:
+        raise TypeError('Invalid location type. Must be string or list of coordinates.')
     return geo_point
 
-def add_zone_of_event():
-    crs = 'EPSG:4326'
-    crashes_data['ZONE'] = ''
-    taxi_zones = nyc_taxi_geo.zone
-    taxi_zones_boundaries = nyc_taxi_geo.geometry
-    crashes_data['geometry'] = crashes_data['LOCATION'].apply(lambda x: convert_to_geometry_point(x, crs))
-    crashes_data_gdf = gpd.GeoDataFrame(crashes_data, geometry='geometry', crs=crs)
 
-    for i, row in crashes_data_gdf.iterrows():
-        point = row['geometry']
+def add_zone_to_event(df, nyc_geo, col_name):
+    # get zone from coordinates
+    # https://geopandas.org/en/stable/docs/reference/geoseries.html
+    crs = 'EPSG:4326'
+    # make a column called 'ZONE' with an empty list
+    df['ZONE'] = [list() for x in range(len(df.index))]
+    taxi_zones = nyc_geo.zone
+    taxi_zones_boundaries = nyc_geo.geometry
+    df['geometry'] = df[col_name].apply(lambda x: convert_to_geometry_point(x))
+    data_gdf = gpd.GeoDataFrame(df, geometry='geometry', crs=crs)
+    for i, row in data_gdf.iterrows():
+        coords = row['geometry']
         for boundary, zone in zip(taxi_zones_boundaries, taxi_zones):
-            if boundary.contains(point):
-                print(zone)
-                crashes_data_gdf.at[i, 'ZONE'] = zone
+            if boundary.contains(coords):
+                data_gdf.at[i, 'ZONE'].append(zone)
                 break
+    #vectorize later
+
+    return data_gdf
 
 
 if __name__ == '__main__':
@@ -205,40 +209,34 @@ if __name__ == '__main__':
 
     # open crashes file
     crashes_data = format_index(open_file("2018_crashes.csv"), 'index')
-
-    # remove columns
+    # remove rows with invalid rows
+    crashes_data = crashes_data.loc[(crashes_data['LATITUDE'] >= 40) & (crashes_data['LATITUDE'] <= 41) & (
+            crashes_data['LONGITUDE'] >= -74.5) & (crashes_data['LONGITUDE'] <= -73)]
+    # remove columns and empty rows
     crashes_data = keep_relevant_columns(crashes_data, ['index', 'CRASH DATE_CRASH TIME', 'LOCATION'])
     crashes_data = datetime_conversions(crashes_data, ['CRASH DATE_CRASH TIME'], '%Y-%m-%d %H:%M:%S')
     crashes_data = crashes_data.dropna()
 
-    # remove rows with no coordinates
-    # crashes_with_coords = crashes_data['LOCATION'].str.startswith("(")
-    # crashes_data = crashes_data.loc[crashes_with_coords]
+    crashes_data = add_zone_to_event(crashes_data, nyc_taxi_geo, 'LOCATION')
 
 
-    # get zone from coordinates
-    # https://geopandas.org/en/stable/docs/reference/geoseries.html
-    crs = 'EPSG:4326'
-    crashes_data['ZONE'] = ''
-    taxi_zones = nyc_taxi_geo.zone
-    taxi_zones_boundaries = nyc_taxi_geo.geometry
-    crashes_data['geometry'] = crashes_data['LOCATION'].apply(lambda x: convert_to_geometry_point(x, crs))
-    crashes_data_gdf = gpd.GeoDataFrame(crashes_data, geometry='geometry', crs=crs)
+    # open file
+    street_closures = open_file("2018_street_closures.csv")
+    street_geometries = open_file("street_geometries.csv")
 
-    for i, row in crashes_data_gdf.iterrows():
-        point = row['geometry']
-        for boundary, zone in zip(taxi_zones_boundaries, taxi_zones):
-            if boundary.contains(point):
-                print(zone)
-                crashes_data_gdf.at[i, 'ZONE'] = zone
-                break
-    ###### TRY TO VECTORIZE LATER
+    # merge the dataframes
+    street_closures['ONSTREETNAME'] = street_closures['ONSTREETNAME'].str.lower()
+    street_closures['ONSTREETNAME'] = street_closures['ONSTREETNAME'].str.replace('\s+', ' ', regex=True)
+    street_geometries['name'] = street_geometries['name'].str.lower()
+    merged_streets_df = pd.merge(street_closures, street_geometries, left_on='ONSTREETNAME', right_on='name')
 
-    #open file
-    street_closures = open_file("2018-street-closures_corrected_names.csv")
-    #remove columns
-    street_closures = keep_relevant_columns(street_closures, ['FROMSTREETNAME', 'TOSTREETNAME',
-                                                              'WORK_START_DATE', 'WORK_END_DATE'])
-    #datetime conversions
-    street_closures = datetime_conversions(street_closures, ['WORK_START_DATE', 'WORK_END_DATE'], '%Y-%m-%d %H:%M:%S')
+    # remove columns and empty rows
+    merged_streets_df = keep_relevant_columns(merged_streets_df, ['ONSTREETNAME', 'WORK_START_DATE', 'WORK_END_DATE',
+                                                                  'geometry'])
+    merged_streets_df = merged_streets_df.dropna()
+    # datetime conversions
+    merged_streets_df = datetime_conversions(merged_streets_df, ['WORK_START_DATE', 'WORK_END_DATE'],
+                                             '%Y-%m-%d %H:%M:%S')
+
+    merged_streets_df = add_zone_to_event(merged_streets_df, nyc_taxi_geo, 'geometry')
 
