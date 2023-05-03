@@ -182,7 +182,7 @@ def add_zone_to_event(df, nyc_geo, col_name):
             if boundary.contains(coords):
                 data_gdf.at[i, 'ZONE'].append(zone)
                 break
-    # vectorize later
+    #vectorize later
 
     return data_gdf
 
