@@ -15,6 +15,7 @@ def map_events_to_zones(nyc_taxi_geo: gpd.GeoDataFrame, crashes: pd.DataFrame, c
 
 
 def zone_center():
+    pass
 
 def plot_routes_for_random_addresses_in_2_zones(gdf: gpd.GeoDataFrame, zone1: int, zone2: int):
     """
