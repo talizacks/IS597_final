@@ -173,6 +173,7 @@ def add_zone_to_event(df, nyc_geo, col_name):
     # make a column called 'ZONE' with an empty list
     df['ZONE'] = [list() for x in range(len(df.index))]
     taxi_zones = nyc_geo.zone
+    taxi_numbers = {key: zone[0] for key, zone in taxi_zones.items()}
     taxi_zones_boundaries = nyc_geo.geometry
     df['geometry'] = df[col_name].apply(lambda x: convert_to_geometry_point(x))
     data_gdf = gpd.GeoDataFrame(df, geometry='geometry', crs=crs)
@@ -180,9 +181,13 @@ def add_zone_to_event(df, nyc_geo, col_name):
         coords = row['geometry']
         for boundary, zone in zip(taxi_zones_boundaries, taxi_zones):
             if boundary.contains(coords):
-                data_gdf.at[i, 'ZONE'].append(zone)
+                data_gdf.at[i, 'ZONE'].append(zone[0])
                 break
     #vectorize later
+    # make seperate tables
+    # connecting table
+    # save it
+    # keep IDs
 
     return data_gdf
 
