@@ -2,8 +2,6 @@
 import File_creation as fc
 import pandas as pd
 import geopandas as gpd
-import numpy as np
-from geopandas import GeoDataFrame
 from shapely.geometry import Point
 from shapely import wkt, LineString
 import folium
