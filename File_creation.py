@@ -201,8 +201,9 @@ def closure_file_setup(collision_path, street_geo_path, zone_geo):
 
     # remove columns and empty rows
     street_closures = keep_relevant_columns(street_closures, ['SEGMENTID', 'ONSTREETNAME', 'WORK_START_DATE',
-                                                              'WORK_END_DATE', 'BOROUGH_CODE', 'geometry'])
+                                                              'WORK_END_DATE', 'BOROUGH_CODE'])
     street_closures = street_closures.dropna()
+    street_closures.to_csv('closures_cleaned.csv', index=True)
 
     closure_zones = add_zone_to_closures(street_closures, street_geometries, zone_geo)
     return street_closures, closure_zones
@@ -223,3 +224,19 @@ def taxi_file_setup(taxi_path):
                                        'PULocationID', 'DOLocationID', 'fare_amount', 'tip_amount',
                                        'tolls_amount', 'total_amount'])
     return taxi_data
+
+
+def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closures_df: pd.DataFrame) -> list:
+    """
+
+    :param trips_df:
+    :param crashes_df:
+    :param closures_df:
+    :return:
+    """
+    events_encountered = []
+    for trip in trips_df.itterows():
+        events_passed = {"tripID": "", "num_of_crashes_passed": 0, "num_of_road_closures_passed": 0}
+        zone1 = trip[""]
+
+    return events_encountered

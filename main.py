@@ -150,28 +150,11 @@ if __name__ == '__main__':
     random_zones = two_random_zones()
     viz.plot_routes_for_random_addresses_in_2_zones(random_zones)
 
-    # open file
-    # street_closures = open_file("2018_street_closures.csv")
-    # street_geometries = open_file("street_geometries.csv")
-    #
-    # # merge the dataframes
-    # street_closures['ONSTREETNAME'] = street_closures['ONSTREETNAME'].str.lower()
-    # street_closures['ONSTREETNAME'] = street_closures['ONSTREETNAME'].str.replace('\s+', ' ', regex=True)
-    # street_geometries['name'] = street_geometries['name'].str.lower()
-    # merged_streets_df = pd.merge(street_closures, street_geometries, left_on='ONSTREETNAME', right_on='name')
-    #
-    # # remove columns and empty rows
-    # merged_streets_df = keep_relevant_columns(merged_streets_df, ['ONSTREETNAME', 'WORK_START_DATE', 'WORK_END_DATE',
-    #                                                               'geometry'])
-    # merged_streets_df = merged_streets_df.dropna()
-    # # datetime conversions
-    # merged_streets_df = datetime_conversions(merged_streets_df, ['WORK_START_DATE', 'WORK_END_DATE'],
-    #                                          '%Y-%m-%d %H:%M:%S')
-    #
-    # merged_streets_df = add_zone_to_event(merged_streets_df, nyc_taxi_geo, 'geometry')
 
     # set up for collision data
-    closures, closure_zones = fc.closure_file_setup("2018_street_closures.csv", "street_geometries.csv", nyc_taxi_geo)
+    #closures, closure_zones = fc.closure_file_setup("2018_street_closures.csv", "street_geometries.csv", nyc_taxi_geo)
+    closures = fc.open_file("closures_cleaned.csv")
+    closure_zones = fc.open_file("closure_zones.csv")
     closures = datetime_conversions(closures, ['WORK_START_DATE', 'WORK_END_DATE'],
                                     '%Y-%m-%d %H:%M:%S')
 
