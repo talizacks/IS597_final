@@ -12,7 +12,7 @@ def cluster_crashes(crashes_df: pd.DataFrame):
     >>> crashes_data = datetime_conversions(open_file("Crash_zones.csv"), ['CRASH DATE_CRASH TIME'], '%Y-%m-%d %H:%M:%S')
     >>> crashes_data['Date'] = crashes_data.apply(lambda x: x['CRASH DATE_CRASH TIME'].date(), axis=1)
     >>> cluster_crashes(crashes_data) #doctest:+ELLIPSIS
-    Unnamed: 0 ...
+                          Unnamed: 0 ...
     [38996 rows x 9 columns]
     """
     # Create Date Column

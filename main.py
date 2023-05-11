@@ -29,11 +29,8 @@ def find_neighbors(gdf: gpd.GeoDataFrame) -> dict:
 
         #add zone neighbors to neighbor dictionary
         neighbor_dict[index + 1] = neighbors
-    zones_with_neighbors = []
-    for x in neighbor_dict:
-        if neighbor_dict[x] != []:
-            zones_with_neighbors.append(x)
-    return neighbor_dict, zones_with_neighbors
+
+    return neighbor_dict
 
 def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
     """
@@ -45,6 +42,7 @@ def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
     trips_zones_dict = {}
     # keep only trips that have PO and DO zones that aren't above 263
     limit_mask = (df['PULocationID'] < 264) & (df['DOLocationID'] < 264)
+    trips_df = df[limit_mask]
 
     # Find zones with no neighbors
     dont_include = []
@@ -53,13 +51,10 @@ def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
             dont_include.append(x)
 
     # create mask to remove trips that start or end in a zone without neighbors
-    no_neighbors_mask = (~df['PULocationID'].isin(dont_include)) & (~df['DOLocationID'].isin(dont_include))
+    no_neighbors_mask = (~trips_df['PULocationID'].isin(dont_include)) & (~trips_df['DOLocationID'].isin(dont_include))
 
     # apply masks
-    # trips_df = df[limit_mask]
-    msk = pd.concat((limit_mask, no_neighbors_mask), axis=1)
-    slct = msk.all(axis=1)
-    trips_df = df.ix[slct]
+    trips_df = trips_df[no_neighbors_mask]
 
     for index, trip in trips_df.iterrows():
         PUzone = trip['PULocationID']
@@ -111,15 +106,19 @@ def removeWeirdTaxiData(df: pd.DataFrame) -> pd.DataFrame:
     too_long = df['trip_time_h'] <= 24      # more than 24hrs
     super_fast = df['avg speed'] <= 90      # drove faster than 90mph
     super_slow = df['avg speed'] >= 1       # drove slower than 1mph
-    msk = pd.concat((too_quick, too_long, super_slow, super_fast), axis=1)
-    slct = msk.all(axis=1)
-    df = df.ix[slct]
+    df = df[too_quick]
+    df = df[too_long]
+    df = df[super_fast]
+    df = df[super_slow]
 
     return df
 
-def two_random_zones():
-    all = find_neighbors(nyc_taxi_geo)[1]
-    return np.random.choices(all, k=2)
+def two_random_zones(neighbor_dict):
+    zones_with_neighbors = []
+    for x in neighbor_dict:
+        if neighbor_dict[x] != []:
+            zones_with_neighbors.append(x)
+    return np.random.choice(zones_with_neighbors, 2)
 
 if __name__ == '__main__':
 
@@ -132,7 +131,7 @@ if __name__ == '__main__':
 
     # neighbors and zones
     nyc_taxi_geo = gpd.read_file('NYC_Taxi_Zones.geojson')
-    neighbors = find_neighbors(nyc_taxi_geo)[0]
+    neighbors = find_neighbors(nyc_taxi_geo)
     taxi_data = filter_trips_based_on_zones(taxi_data, neighbors)
 
 
