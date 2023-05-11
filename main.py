@@ -9,8 +9,6 @@ from shapely import wkt, LineString
 import folium
 
 
-
-
 def find_neighbors(gdf: gpd.GeoDataFrame) -> dict:
     """
     :param zones: taxi zones

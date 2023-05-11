@@ -1,14 +1,15 @@
 import pandas as pd
 import geopandas as gpd
+import shapely
 from geopandas import GeoDataFrame
 from shapely.geometry import Point
 from shapely import wkt, LineString
-
+from typing import Union
 
 def open_file(path: str) -> pd.DataFrame:
     """
-
-    :param path:
+    opens csv file as a pandas dataframe
+    :param path: path to the csv file
     :return: pandas DataFrame
     """
     return pd.read_csv(path)
@@ -16,10 +17,10 @@ def open_file(path: str) -> pd.DataFrame:
 
 def format_index(df: pd.DataFrame, new_index_name: str) -> pd.DataFrame:
     """
-
-    :param df:
-    :param new_index_name:
-    :return:
+    Format the index of a pandas dataframe.
+    :param df: Pandas dataframe.
+    :param new_index_name: Name of the index.
+    :return: Pandas dataframe with index.
     """
     df.rename(columns={'Unnamed: 0': new_index_name}, inplace=True)
     df.set_index(new_index_name)
@@ -28,16 +29,16 @@ def format_index(df: pd.DataFrame, new_index_name: str) -> pd.DataFrame:
 
 def keep_relevant_columns(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     """
-
-    :param df:
-    :param column_names:
-    :return:
+    Removes unused columns. Keeps only the columns in the column_names list.
+    :param df: Pandas dataframe.
+    :param column_names: Column names to keep.
+    :return: Pandas dataframe with only the relevant columns.
     """
     df = df[column_names]
     return df
 
 
-def convert_to_geometry_point(coords):
+def convert_to_geometry_point(coords: str) -> Union[shapely.Point, shapely.LineString]:
     """
     Converts a coordinates string to a geometry point object.
     :param coords: A string containing the coordinates in the format "(lat, lon)". Either a single coordinate point
@@ -57,7 +58,7 @@ def convert_to_geometry_point(coords):
     return geo_point
 
 
-def borough_match(borough_code, borough_name):
+def borough_match(borough_code: str, borough_name: str) -> bool:
     """
     Matches borough code from closure file to the borough name in taxi zone file.
     :param borough_code: A character representation of a New York borough
@@ -79,7 +80,7 @@ def borough_match(borough_code, borough_name):
         return False
 
 
-def add_zone_to_crash(df, nyc_geo):
+def add_zone_to_crash(df: pd.DataFrame, nyc_geo: gpd.geodataframe) -> gpd.GeoDataFrame:
     """
 
     :param df:
