@@ -4,14 +4,14 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import networkx as nx
 
-def map_events_to_zones(nyc_taxi_geo: gpd.GeoDataFrame, crashes: pd.DataFrame, closures: pd.DataFrame):
-    """
-    Maps crashes and closures to
-    :param nyc_taxi_geo:
-    :param crashes:
-    :param closures:
-    :return:
-    """
+# def map_events_to_zones(nyc_taxi_geo: gpd.GeoDataFrame, crashes: pd.DataFrame, closures: pd.DataFrame):
+#     """
+#     Maps crashes and closures to
+#     :param nyc_taxi_geo:
+#     :param crashes:
+#     :param closures:
+#     :return:
+#     """
 
 
 def zone_center():
@@ -44,34 +44,38 @@ def plot_routes_for_random_addresses_in_2_zones(gdf: gpd.GeoDataFrame, zone1: in
         address_list = address.to_list()
         lat = float((str(address_list).split(' '))[1].strip('('))
         lon = float((str(address_list).split(' '))[2].strip(')>]'))
-        node = ox.nearest_nodes(g, lat, lon)
-        address_dict[address] = [lat, lon, node]
-    print(address_dict)
-    route = ox.shortest_path(nyc_full, address_dict[random_address_z1][2], address_dict[random_address_z2][2],
+        node = ox.nearest_nodes(nyc_full, lat, lon)
+        address_dict[tuple(address.to_list())] = (lat, lon, node)
+    route = ox.shortest_path(nyc_full, address_dict[tuple(random_address_z1.to_list())][2],
+                             address_dict[tuple(random_address_z2.to_list())][2],
                              weight='length')
 
     zones = nx.compose(g_z1, g_z2).to_undirected()
     c = ox.graph_to_gdfs(zones, edges=False).unary_union.centroid
     bbox = ox.utils_geo.bbox_from_point(point=(c.y, c.x), dist=5000)
 
-    fig, ax = ox.plot_graph_route(nyc_full, route, 'y', show=False, close=False, node_size=1, node_color='w', edge_color='w',
-                                  edge_linewidth=0.05,bbox = bbox)
-
+    fig, ax = ox.plot_graph_route(nyc_full, route, 'y', show=False, close=False, node_size=1, node_color='w', edge_color='b',
+                        edge_linewidth=0.05, bbox=bbox)
     random_address_z1.plot(color='r', ax=ax)
     random_address_z2.plot(color='b', ax=ax)
-    return ax
+    plt.title(f'Shortest Route Between Random Points in Zone {zone1} and Zone {zone2}')
+    plt.autoscale()
+    plt.show()
+    return
 
-def events_during_trips(trips, crashes, closures):
-    """
-
-    :param trips:
-    :param crashes:
-    :param closures:
-    :return: List of dictionaries. Each dictionary...
-    """
-    events_in_trips = []
-    for trip in trips:
-        pass
+# nyc_gdf = gpd.read_file('NYC_Taxi_Zones.geojson')
+# plot_routes_for_random_addresses_in_2_zones(nyc_gdf, 12, 34)
+# def events_during_trips(trips, crashes, closures):
+#     """
+#
+#     :param trips:
+#     :param crashes:
+#     :param closures:
+#     :return: List of dictionaries. Each dictionary...
+#     """
+#     events_in_trips = []
+#     for trip in trips:
+#         pass
 
 
 # zone_slide = ipywidgets.IntSlider(value=2, min=2, max=263)

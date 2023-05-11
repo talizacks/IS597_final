@@ -2,6 +2,8 @@ import geopandas as gpd
 import pandas as pd
 from shapely import wkt
 import matplotlib.pyplot as plt
+import File_creation as fc
+import datetime
 
 def cluster_crashes(crashes_df: pd.DataFrame):
     """
@@ -9,7 +11,7 @@ def cluster_crashes(crashes_df: pd.DataFrame):
     :param crashes_df:
     :return:
     >>> nyc_taxi_geo = gpd.read_file('NYC_Taxi_Zones.geojson')
-    >>> crashes_data = datetime_conversions(open_file("Crash_zones.csv"), ['CRASH DATE_CRASH TIME'], '%Y-%m-%d %H:%M:%S')
+    >>> crashes_data = datetime_conversions(fc.open_file("Crash_zones.csv"), ['CRASH DATE_CRASH TIME'], '%Y-%m-%d %H:%M:%S')
     >>> crashes_data['Date'] = crashes_data.apply(lambda x: x['CRASH DATE_CRASH TIME'].date(), axis=1)
     >>> cluster_crashes(crashes_data) #doctest:+ELLIPSIS
                           Unnamed: 0 ...

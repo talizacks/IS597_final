@@ -17,6 +17,18 @@ def open_file(path: str) -> pd.DataFrame:
     """
     return pd.read_csv(path)
 
+def combine_taxi_dfs() -> pd.DataFrame:
+    """
+    :return: Combined 12 months of taxi trip data into one DataFrame
+    """
+    dfs = []
+    for i in range(1, 13):
+        df = pd.read_csv(f'taxi/Yellow_Taxi_Trip_Data_{i}_2018.csv', infer_datetime_format=True)
+        dfs.append(df)
+    combined = pd.concat(dfs)
+    combined_sample = combined.sample(n=200000)
+    combined_sample.to_csv('combined_taxi_2018_200k_sample.csv')
+    return combined_sample
 
 def format_index(df: pd.DataFrame, new_index_name: str) -> pd.DataFrame:
     """

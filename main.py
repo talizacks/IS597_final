@@ -1,4 +1,3 @@
-import Vis as viz
 import File_creation as fc
 import pandas as pd
 import geopandas as gpd
@@ -7,6 +6,7 @@ from shapely import wkt, LineString
 import folium
 import clusters as c
 import numpy as np
+import Vis as viz
 
 
 def find_neighbors(gdf: gpd.GeoDataFrame) -> dict:
@@ -63,7 +63,7 @@ def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
     exclude = []
     for x in trips_df.iterrows():
         tripID = x[1][0]
-        DOzone = x[1][9]
+        DOzone = x[1][5]
         if DOzone not in (trips_zones_dict[tripID]):
             exclude.append(tripID)
     trips_df = trips_df[~trips_df['tripID'].isin(exclude)]
@@ -103,12 +103,12 @@ def removeWeirdTaxiData(df: pd.DataFrame) -> pd.DataFrame:
     :return:
     """
     too_quick = df['trip_time_h'] >= 0.01666666667      # less than a minute
-    too_long = df['trip_time_h'] <= 24      # more than 24hrs
-    super_fast = df['avg speed'] <= 90      # drove faster than 90mph
-    super_slow = df['avg speed'] >= 1       # drove slower than 1mph
     df = df[too_quick]
+    too_long = df['trip_time_h'] <= 24      # more than 24hrs
     df = df[too_long]
+    super_fast = df['avg speed'] <= 90      # drove faster than 90mph
     df = df[super_fast]
+    super_slow = df['avg speed'] >= 1       # drove slower than 1mph
     df = df[super_slow]
 
     return df
@@ -118,7 +118,10 @@ def two_random_zones(neighbor_dict):
     for x in neighbor_dict:
         if neighbor_dict[x] != []:
             zones_with_neighbors.append(x)
-    return np.random.choice(zones_with_neighbors, 2)
+    zone1 = np.random.choice(zones_with_neighbors)
+    print(neighbor_dict[zone1])
+    zone2 = np.random.choice(neighbor_dict[zone1])
+    return zone1, zone2
 
 if __name__ == '__main__':
 
@@ -127,6 +130,7 @@ if __name__ == '__main__':
     taxi_data = datetime_conversions(taxi_data, ['tpep_pickup_datetime', 'tpep_dropoff_datetime'],
                                      '%m/%d/%Y %I:%M:%S %p')
     taxi_data = add_time_and_speed(taxi_data)
+    taxi_data = removeWeirdTaxiData(taxi_data)
 
 
     # neighbors and zones
@@ -146,9 +150,8 @@ if __name__ == '__main__':
 
     clustered = c.cluster_clusters(clusters_df, nyc_taxi_geo)
 
-
-    # random_zones = two_random_zones()
-    # viz.plot_routes_for_random_addresses_in_2_zones(random_zones)
+    random_zones = two_random_zones(neighbors)
+    viz.plot_routes_for_random_addresses_in_2_zones(nyc_taxi_geo, random_zones[0], random_zones[1])
 
 
     # set up for collision data
@@ -157,8 +160,5 @@ if __name__ == '__main__':
     closure_zones = fc.open_file("closure_zones.csv")
     closures = datetime_conversions(closures, ['WORK_START_DATE', 'WORK_END_DATE'],
                                     '%Y-%m-%d %H:%M:%S')
-
-
-
 
 
