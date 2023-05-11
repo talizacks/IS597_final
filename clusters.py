@@ -3,7 +3,6 @@ import pandas as pd
 from shapely import wkt
 import matplotlib.pyplot as plt
 
-
 def cluster_crashes(crashes_df: pd.DataFrame):
     """
 

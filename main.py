@@ -1,4 +1,4 @@
-# import Vis
+import Vis as viz
 import File_creation as fc
 import pandas as pd
 import geopandas as gpd
@@ -6,6 +6,7 @@ from shapely.geometry import Point
 from shapely import wkt, LineString
 import folium
 import clusters as c
+import numpy as np
 
 
 def find_neighbors(gdf: gpd.GeoDataFrame) -> dict:
@@ -28,8 +29,11 @@ def find_neighbors(gdf: gpd.GeoDataFrame) -> dict:
 
         #add zone neighbors to neighbor dictionary
         neighbor_dict[index + 1] = neighbors
-
-    return neighbor_dict
+    zones_with_neighbors = []
+    for x in neighbor_dict:
+        if neighbor_dict[x] != []:
+            zones_with_neighbors.append(x)
+    return neighbor_dict, zones_with_neighbors
 
 def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
     """
@@ -52,8 +56,10 @@ def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
     no_neighbors_mask = (~df['PULocationID'].isin(dont_include)) & (~df['DOLocationID'].isin(dont_include))
 
     # apply masks
-    trips_df = df[limit_mask]
-    trips_df = trips_df[no_neighbors_mask]
+    # trips_df = df[limit_mask]
+    msk = pd.concat((limit_mask, no_neighbors_mask), axis=1)
+    slct = msk.all(axis=1)
+    trips_df = df.ix[slct]
 
     for index, trip in trips_df.iterrows():
         PUzone = trip['PULocationID']
@@ -63,9 +69,7 @@ def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
     for x in trips_df.iterrows():
         tripID = x[1][0]
         DOzone = x[1][9]
-        # print(PUzone,DOzone)
         if DOzone not in (trips_zones_dict[tripID]):
-            # print(tripID)
             exclude.append(tripID)
     trips_df = trips_df[~trips_df['tripID'].isin(exclude)]
     return trips_df
@@ -107,13 +111,15 @@ def removeWeirdTaxiData(df: pd.DataFrame) -> pd.DataFrame:
     too_long = df['trip_time_h'] <= 24      # more than 24hrs
     super_fast = df['avg speed'] <= 90      # drove faster than 90mph
     super_slow = df['avg speed'] >= 1       # drove slower than 1mph
-    df = df[too_quick]
-    df = df[too_long]
-    df = df[super_fast]
-    df = df[super_slow]
+    msk = pd.concat((too_quick, too_long, super_slow, super_fast), axis=1)
+    slct = msk.all(axis=1)
+    df = df.ix[slct]
 
     return df
 
+def two_random_zones():
+    all = find_neighbors(nyc_taxi_geo)[1]
+    return np.random.choices(all, k=2)
 
 if __name__ == '__main__':
 
@@ -126,7 +132,7 @@ if __name__ == '__main__':
 
     # neighbors and zones
     nyc_taxi_geo = gpd.read_file('NYC_Taxi_Zones.geojson')
-    neighbors = find_neighbors(nyc_taxi_geo)
+    neighbors = find_neighbors(nyc_taxi_geo)[0]
     taxi_data = filter_trips_based_on_zones(taxi_data, neighbors)
 
 
@@ -139,7 +145,12 @@ if __name__ == '__main__':
     clusters_df = c.cluster_crashes(crashes)
     print(clusters_df.groupby(by=['Date', 'ZONE']).count().sort_values('index_x', ascending=False))
 
-    clustered = c.cluster_clusters(clusters_df,nyc_taxi_geo)
+    clustered = c.cluster_clusters(clusters_df, nyc_taxi_geo)
+
+
+    random_zones = two_random_zones()
+    viz.plot_routes_for_random_addresses_in_2_zones(random_zones)
+
     # open file
     # street_closures = open_file("2018_street_closures.csv")
     # street_geometries = open_file("street_geometries.csv")

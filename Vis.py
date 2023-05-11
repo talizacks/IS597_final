@@ -4,7 +4,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import networkx as nx
 
-def map_events_to_zones(nyc_taxi_geo: gpd.GeoDataFrame, crashes: pd.DataFrame, closures: pd.DataFrame)
+def map_events_to_zones(nyc_taxi_geo: gpd.GeoDataFrame, crashes: pd.DataFrame, closures: pd.DataFrame):
     """
     Maps crashes and closures to
     :param nyc_taxi_geo:
