@@ -7,6 +7,7 @@ from geopandas import GeoDataFrame
 from shapely.geometry import Point
 from shapely import wkt, LineString
 import folium
+import clusters as c
 
 
 def find_neighbors(gdf: gpd.GeoDataFrame) -> dict:
@@ -137,10 +138,10 @@ if __name__ == '__main__':
 
 
     # crashes_data = add_zone_to_event(crashes_data, nyc_taxi_geo, 'LOCATION')
-    clusters_df = cluster_crashes(crashes_data)
+    clusters_df = c.cluster_crashes(crashes)
     print(clusters_df.groupby(by=['Date', 'ZONE']).count().sort_values('index_x', ascending=False))
 
-    clustered = cluster_clusters(clusters_df,nyc_taxi_geo)
+    clustered = c.cluster_clusters(clusters_df,nyc_taxi_geo)
     # open file
     # street_closures = open_file("2018_street_closures.csv")
     # street_geometries = open_file("street_geometries.csv")
