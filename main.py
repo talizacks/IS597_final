@@ -136,19 +136,19 @@ if __name__ == '__main__':
 
 
     # set up for crash data
-    crashes = fc.crash_file_setup("2018_crashes.csv", nyc_taxi_geo)
+    # crashes = fc.crash_file_setup("2018_crashes.csv", nyc_taxi_geo)
+    crashes = fc.open_file("Crash_zones.csv")
     crashes = datetime_conversions(crashes, ['CRASH DATE_CRASH TIME'], '%Y-%m-%d %H:%M:%S')
 
 
-    # crashes_data = add_zone_to_event(crashes_data, nyc_taxi_geo, 'LOCATION')
     clusters_df = c.cluster_crashes(crashes)
     print(clusters_df.groupby(by=['Date', 'ZONE']).count().sort_values('index_x', ascending=False))
 
     clustered = c.cluster_clusters(clusters_df, nyc_taxi_geo)
 
 
-    random_zones = two_random_zones()
-    viz.plot_routes_for_random_addresses_in_2_zones(random_zones)
+    # random_zones = two_random_zones()
+    # viz.plot_routes_for_random_addresses_in_2_zones(random_zones)
 
 
     # set up for collision data
@@ -157,5 +157,8 @@ if __name__ == '__main__':
     closure_zones = fc.open_file("closure_zones.csv")
     closures = datetime_conversions(closures, ['WORK_START_DATE', 'WORK_END_DATE'],
                                     '%Y-%m-%d %H:%M:%S')
+
+
+
 
 

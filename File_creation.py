@@ -1,3 +1,5 @@
+import csv
+
 import pandas as pd
 import geopandas as gpd
 import shapely
@@ -5,6 +7,7 @@ from geopandas import GeoDataFrame
 from shapely.geometry import Point
 from shapely import wkt, LineString
 from typing import Union
+from datetime import timedelta
 
 def open_file(path: str) -> pd.DataFrame:
     """
@@ -226,17 +229,40 @@ def taxi_file_setup(taxi_path):
     return taxi_data
 
 
-def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closures_df: pd.DataFrame) -> list:
+def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closures_df: pd.DataFrame, closure_zones_df: pd.DataFrame) -> list:
     """
 
     :param trips_df:
     :param crashes_df:
     :param closures_df:
+    :param closure_zones_df:
     :return:
     """
     events_encountered = []
-    for trip in trips_df.itterows():
-        events_passed = {"tripID": "", "num_of_crashes_passed": 0, "num_of_road_closures_passed": 0}
-        zone1 = trip[""]
+    for index, trip in trips_df.iterrows():
+        events_passed = {'tripID': trip['tripID'], 'num_of_crashes_passed': 0, 'num_of_road_closures_passed': 0}
 
+        zone1 = trip["PULocationID"]
+        zone2 = trip["DOLocationID"]
+        pick_time = trip["tpep_pickup_datetime"]
+        drop_time = trip["tpep_dropoff_datetime"]
+        time_window = timedelta(minutes=30)
+
+        rows_with_zone_and_time_crashes = crashes_df.loc[((crashes_df["ZONE"] == zone1) | (crashes_df["ZONE"] == zone2)) &
+                                                 (crashes_df["CRASH DATE_CRASH TIME"] >= pick_time - time_window) &
+                                                 (crashes_df["CRASH DATE_CRASH TIME"] <= drop_time + time_window)]
+        events_passed["num_of_crashes_passed"] = len(rows_with_zone_and_time_crashes)
+
+        rows_with_time_closures = closures_df.loc[(closures_df["WORK_START_DATE"] < pick_time) &
+                                                  (pick_time < closures_df["WORK_END_DATE"])]
+        rows_with_zone_closures = closure_zones_df.loc[((closure_zones_df["ZONE"] == zone1) |
+                                                        (closure_zones_df["ZONE"] == zone2))]
+        # get unique segment IDs
+        rows_with_zone_closures = rows_with_zone_closures.drop_duplicates(subset=["SEGMENTID", "ZONE"])
+        # find rows with same segmentID and timeframe
+        rows_with_zone_and_time_collisions = pd.merge(rows_with_time_closures, rows_with_zone_closures,
+                                                      on="SEGMENTID", how="inner")
+        events_passed["num_of_road_closures_passed"] = len(rows_with_zone_and_time_collisions)
+
+        events_encountered.append(events_passed)
     return events_encountered
