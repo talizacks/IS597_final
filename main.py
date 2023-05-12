@@ -120,6 +120,7 @@ def two_random_zones(neighbor_dict):
     zone2 = np.random.choice(neighbor_dict[zone1])
     return zone1, zone2
 
+
 if __name__ == '__main__':
 
     # set up for taxi data

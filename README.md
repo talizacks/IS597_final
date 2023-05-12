@@ -49,4 +49,12 @@ https://data.cityofnewyork.us/Transportation/NYC-Taxi-Zones/d3c5-ddgc
 - re
 
 ## Process:
-Run File_creation.py
+In main.py:
+
+- To setup final crash file, uncomment:
+```crashes = fc.crash_file_setup("2018_crashes.csv", nyc_taxi_geo)```
+  - New file: Crash_zones.csv
+- To setup final closure file, uncomment:
+```closures, closure_zones = fc.closure_file_setup("2018_street_closures.csv", "street_geometries.csv", nyc_taxi_geo)```
+  - New file: closures_cleaned.csv
+- 
