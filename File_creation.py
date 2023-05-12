@@ -4,7 +4,7 @@ import shapely
 from shapely.geometry import Point
 from shapely import wkt, LineString
 from typing import Union
-from datetime import timedelta
+from datetime import datetime, timedelta
 import re
 import numpy as np
 import osmnx as ox
@@ -59,6 +59,14 @@ def convert_to_geometry_point(coords: str) -> Union[shapely.Point, shapely.LineS
     :param coords: A string containing the coordinates in the format "(lat, lon)". Either a single coordinate point
         or a LineString with multiple coordinate points.
     :return: A Point or LineString object.
+    >>> point = "(40.8018, -73.96108)"
+    >>> point_obj = convert_to_geometry_point(point)
+    >>> type(point_obj) == Point
+    True
+    >>> linestring = "LINESTRING (-73.7946273 40.7864093, -73.7930869 40.7869752)"
+    >>> line_obj = convert_to_geometry_point(linestring)
+    >>> type(line_obj) == LineString
+    True
     """
     if coords.startswith('LINESTRING'):
         coords = coords.replace("LINESTRING (", "").replace(")", "")
@@ -80,6 +88,12 @@ def borough_match(borough_code: str, borough_name: str) -> bool:
     :param borough_name: a string of a New York borough
     :return: True if the code and name refers to the same borough. False if the code and name do not refer to
         the same borough
+    >>> match = borough_match('B', 'Brooklyn')
+    >>> match
+    True
+    >>> match = borough_match('S', 'Manhattan')
+    >>> match
+    False
     """
     if borough_code == 'B' and borough_name == 'Brooklyn':
         return True
@@ -97,13 +111,12 @@ def borough_match(borough_code: str, borough_name: str) -> bool:
 
 def add_zone_to_crash(df: pd.DataFrame, nyc_geo: gpd.geodataframe) -> gpd.GeoDataFrame:
     """
-
-    :param df:
-    :param nyc_geo:
-    :return:
+    Finds the zone corresponding to car crashes.
+    :param df: Pandas dataframe with crashes data.
+    :param nyc_geo: geopandas dataframe with taxi zone data.
+    :return: geopandas dataframe with crash data and zones where the crash occurred.
     """
     crs = 'EPSG:4326'
-    # make a column called 'ZONE' with an empty list
     df['ZONE'] = [list() for x in range(len(df.index))]
     taxi_zones = nyc_geo.zone
     taxi_zones_boundaries = nyc_geo.geometry
@@ -116,18 +129,18 @@ def add_zone_to_crash(df: pd.DataFrame, nyc_geo: gpd.geodataframe) -> gpd.GeoDat
             if boundary.contains(coords):
                 data_gdf.at[i, 'ZONE'].append(zone)
                 break
-
+    data_gdf.to_csv('Crash_zones.csv', index=True)
     return data_gdf
 
 
-def add_zone_to_closures(closures, street_geometries, nyc_geo):
+def add_zone_to_closures(closures, street_geometries, nyc_geo) -> pd.DataFrame:
     """
-    Finds the zone corresponding with the coordinates of a road closure
+    Finds the zone corresponding with the coordinates of a road closure. Creates a new
     :param closures: dataframe containing the street closures in New York city in 2018.
     :param street_geometries: dataframe containing the LineStrings representing the streets of New York city.
     :param nyc_geo: geopandas dataframe containing information about taxi zones in New York city.
+    :return pandas dataframe with columns for road closure ID and zone where the road closure is.
     """
-
     # make connector table
     closure_zones = pd.DataFrame(columns=['SEGMENTID', 'ZONE'])
 
@@ -179,10 +192,10 @@ def add_zone_to_closures(closures, street_geometries, nyc_geo):
 
 def crash_file_setup(crash_path, zone_geo):
     """
-
-    :param crash_path:
-    :param zone_geo:
-    :return:
+    Cleans the crash data.
+    :param crash_path: path to crash data
+    :param zone_geo: geopandas dataframe of taxi zones
+    :return: the results of the function add_zone_to_crash. Which is a geopandas dataframe with the crash data and zones
     """
     # open crashes file
     crashes_data = format_index(open_file(crash_path), 'index')
@@ -197,16 +210,16 @@ def crash_file_setup(crash_path, zone_geo):
     return add_zone_to_crash(crashes_data, zone_geo)
 
 
-def closure_file_setup(collision_path, street_geo_path, zone_geo):
+def closure_file_setup(closures_path, street_geo_path, zone_geo):
     """
-
-    :param collision_path:
-    :param street_geo_path:
-    :param zone_geo:
-    :return:
+    cleans the closure and street geometries data.
+    :param closures_path: path to closures data
+    :param street_geo_path: path to street geometries data
+    :param zone_geo: geopandas dataframe of taxi zones
+    :return: pandas dataframe of street closures and a pandas dataframe of the zones where the closure occurred
     """
     # open file
-    street_closures = open_file(collision_path)
+    street_closures = open_file(closures_path)
     street_geometries = open_file(street_geo_path)
 
     # Make street names the same in both dataframes
@@ -226,9 +239,9 @@ def closure_file_setup(collision_path, street_geo_path, zone_geo):
 
 def taxi_file_setup(taxi_path):
     """
-
-    :param taxi_path:
-    :return:
+    cleans the taxi trips data.
+    :param taxi_path: path to taxi trip data
+    :return: pandas dataframe of taxi trip data
     """
     # open file
     taxi_data = format_index(open_file(taxi_path), 'tripID')
@@ -243,12 +256,34 @@ def taxi_file_setup(taxi_path):
 
 def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closures_df: pd.DataFrame, closure_zones_df: pd.DataFrame) -> list:
     """
-
-    :param trips_df:
-    :param crashes_df:
-    :param closures_df:
-    :param closure_zones_df:
-    :return:
+    Finds the number of events which occurred at within an hour time interval and same zone as a taxi trip
+    :param trips_df: pandas dataframe of taxi trips data
+    :param crashes_df: pandas dataframe of car crashes data
+    :param closures_df: pandas dataframe of road closure data
+    :param closure_zones_df: pandas dataframe of road closure zones data
+    :return: a list containing dictuinaries of each trip ID, the number of crashes passed, and the number of road closures passed.
+    >>> trips = pd.DataFrame({
+    ...     'tripID': [1, 2],
+    ...     'PULocationID': [10, 20],
+    ...     'DOLocationID': [15, 25],
+    ...     'tpep_pickup_datetime': [datetime(2023, 5, 1, 10, 0), datetime(2023, 5, 1, 11, 0)],
+    ...     'tpep_dropoff_datetime': [datetime(2023, 5, 1, 10, 30), datetime(2023, 5, 1, 11, 30)]
+    ... })
+    >>> crash = pd.DataFrame({
+    ...     'ZONE': [10, 20, 30],
+    ...     'CRASH DATE_CRASH TIME': [datetime(2023, 5, 1, 9, 45), datetime(2023, 5, 1, 10, 15), datetime(2023, 5, 1, 11, 10)]
+    ... })
+    >>> close = pd.DataFrame({
+    ...     'SEGMENTID': [100, 200],
+    ...     'WORK_START_DATE': [datetime(2023, 5, 1, 9, 0), datetime(2023, 5, 1, 10, 30)],
+    ...     'WORK_END_DATE': [datetime(2023, 5, 1, 10, 0), datetime(2023, 5, 1, 11, 0)]
+    ... })
+    >>> close_zone = pd.DataFrame({
+    ...     'ZONE': [10, 20],
+    ...     'SEGMENTID': [100, 200]
+    ... })
+    >>> events_during_trips(trips, crash, close, close_zone)
+    [{'tripID': 1, 'num_of_crashes_passed': 1, 'num_of_road_closures_passed': 1}, {'tripID': 2, 'num_of_crashes_passed': 0, 'num_of_road_closures_passed': 1}]
     """
     events_encountered = []
     for index, trip in trips_df.iterrows():
@@ -265,8 +300,8 @@ def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closur
                                                  (crashes_df["CRASH DATE_CRASH TIME"] <= drop_time + time_window)]
         events_passed["num_of_crashes_passed"] = len(rows_with_zone_and_time_crashes)
 
-        rows_with_time_closures = closures_df.loc[(closures_df["WORK_START_DATE"] < pick_time) &
-                                                  (pick_time < closures_df["WORK_END_DATE"])]
+        rows_with_time_closures = closures_df.loc[(closures_df["WORK_START_DATE"] <= pick_time) &
+                                                  (pick_time <= closures_df["WORK_END_DATE"])]
         rows_with_zone_closures = closure_zones_df.loc[((closure_zones_df["ZONE"] == zone1) |
                                                         (closure_zones_df["ZONE"] == zone2))]
         # get unique segment IDs
@@ -281,11 +316,19 @@ def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closur
 
 
 def street_geometries():
+    """
+    creates a csv file containing the geometries of street in New York city.
+    """
     g = ox.graph_from_place('NYC, NY, USA', network_type='drive')
     nyc = ox.graph_to_gdfs(g, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=False)
     nyc = nyc[~nyc['name'].apply(lambda x: isinstance(x, list))]
 
-    def remove_suffix(name):
+    def remove_suffix(name: str) -> Union[str, np.nan]:
+        """
+        Removes the suffix from street name.
+        :param name: The name of street.
+        :return: returns a numpy nan or a the name of the street with no suffix
+        """
         # check if value is a string
         if isinstance(name, str):
             # apply regular expression to remove suffix
