@@ -80,5 +80,4 @@ In main.py:
 - For an interactive look at clusters and trip times by zone see interactive_final_nb.ipynb
 
 - Analysis of traffic events' effect on taxi trips
-  - Process:
-  - Results:
+  - Results: The trips that occurred during traffic events are an average of $1.20 more expensive, 1.8 minutes longer, and have an average speed about 1mph slower than those that didn't occur during any traffic event.
