@@ -71,4 +71,5 @@ In main.py:
 - clusters_df creates a pandas dataframe which groups crashes and the date of the crash to show that a car crash leads to more car crashes.
 
 - Analysis of traffic events' effect on taxi trips
-  - 
+  - Process:
+  - Results:
