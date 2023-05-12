@@ -1,9 +1,6 @@
 import File_creation as fc
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point
-from shapely import wkt, LineString
-import folium
 import clusters as c
 import numpy as np
 import Vis as viz

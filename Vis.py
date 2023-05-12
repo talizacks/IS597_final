@@ -1,5 +1,4 @@
 import osmnx as ox
-import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import networkx as nx

@@ -1,13 +1,13 @@
-import csv
-
 import pandas as pd
 import geopandas as gpd
 import shapely
-from geopandas import GeoDataFrame
 from shapely.geometry import Point
 from shapely import wkt, LineString
 from typing import Union
 from datetime import timedelta
+import re
+import numpy as np
+import osmnx as ox
 
 def open_file(path: str) -> pd.DataFrame:
     """
@@ -278,3 +278,22 @@ def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closur
 
         events_encountered.append(events_passed)
     return events_encountered
+
+
+def street_geometries():
+    g = ox.graph_from_place('NYC, NY, USA', network_type='drive')
+    nyc = ox.graph_to_gdfs(g, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=False)
+    nyc = nyc[~nyc['name'].apply(lambda x: isinstance(x, list))]
+
+    def remove_suffix(name):
+        # check if value is a string
+        if isinstance(name, str):
+            # apply regular expression to remove suffix
+            return re.sub(r'(?<=\d)(st|nd|rd|th)\b', '', name)
+        # if value is not a string or is NaN, return NaN
+        else:
+            return np.nan
+
+    # apply function to 'name' column and overwrite existing values
+    nyc['name'] = nyc['name'].apply(remove_suffix)
+    nyc[['name', 'geometry']].dropna().to_csv('street_geometries.csv')
