@@ -117,7 +117,6 @@ def two_random_zones(neighbor_dict: dict):
         if neighbor_dict[x] != []:
             zones_with_neighbors.append(x)
     zone1 = np.random.choice(zones_with_neighbors)
-    print(neighbor_dict[zone1])
     zone2 = np.random.choice(neighbor_dict[zone1])
     return zone1, zone2
 
@@ -130,6 +129,8 @@ def trips_during_events_avg_time(trips_df: pd.DataFrame, crashes_df: pd.DataFram
     taxi_data_during_events = trips_df.mask(during_events_mask)
     taxi_data_not_during_events = trips_df.mask(~during_events_mask)
     print(taxi_data_during_events.groupby('PULocation')[['fare_amount', 'trip_time_h', 'avg_speed']].describe())
+    print(taxi_data_not_during_events.groupby('PULocation')[['fare_amount', 'trip_time_h', 'avg_speed']].describe())
+
 
 if __name__ == '__main__':
 
@@ -158,8 +159,8 @@ if __name__ == '__main__':
 
     clustered = c.cluster_clusters(clusters_df, nyc_taxi_geo)
 
-    random_zones = two_random_zones(neighbors)
-    viz.plot_routes_for_random_addresses_in_2_zones(nyc_taxi_geo, random_zones[0], random_zones[1])
+    # random_zones = two_random_zones(neighbors)
+    # viz.plot_routes_for_random_addresses_in_2_zones(nyc_taxi_geo, random_zones[0], random_zones[1])
 
 
     # set up for collision data
@@ -168,6 +169,6 @@ if __name__ == '__main__':
     closure_zones = fc.open_file("closure_zones.csv")
     closures = datetime_conversions(closures, ['WORK_START_DATE', 'WORK_END_DATE'],
                                     '%Y-%m-%d %H:%M:%S')
-    trips_during_events = fc.events_during_trips(taxi_data, crashes, closures, closure_zones)
+    trips_during_events_avg_time(taxi_data, crashes, closures, closure_zones)
 
 

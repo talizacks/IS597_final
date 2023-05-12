@@ -65,6 +65,8 @@ In main.py:
     - Computationally intensive.
 - The resulting files are already present in the GitHub.
 
+
+
 - fc.events_during_trips() goes through all the taxi trips and creates a dictionary with the trip ID as the key.
   - The values of the dictionary are dictionaries with the number of crashes and the number of collisions that occurred during and near the trip.
 
