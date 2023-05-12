@@ -77,6 +77,7 @@ In main.py:
 
 - clusters_df creates a pandas dataframe which groups crashes and the date of the crash to show that a car crash leads to more car crashes.
 - The clustering dataframe is printed to show car crashes do in fact cluster.
+- For an interactive look at clusters and trip times by zone see interactive_final_nb.ipynb
 
 - Analysis of traffic events' effect on taxi trips
   - Process:
