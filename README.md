@@ -54,7 +54,21 @@ In main.py:
 - To setup final crash file, uncomment:
 ```crashes = fc.crash_file_setup("2018_crashes.csv", nyc_taxi_geo)```
   - New file: Crash_zones.csv
+  - This will call crash_file_setup(), which in turns call add_zone_to_crash().
+    - Add_zone_to_crash() will go through the crash coordinates and find the taxi zone where they occurred.
+    - Computationally intensive.
 - To setup final closure file, uncomment:
 ```closures, closure_zones = fc.closure_file_setup("2018_street_closures.csv", "street_geometries.csv", nyc_taxi_geo)```
   - New file: closures_cleaned.csv
-- 
+  - This will call closure_file_setup(), which in turn calls add_zone_to_closures().
+    - add_zone_to_closures() will go through the crash coordinates and find the taxi zone(s) where they occurred.
+    - Computationally intensive.
+- The resulting files are already present in the GitHub.
+
+- fc.events_during_trips() goes through all the taxi trips and creates a dictionary with the trip ID as the key.
+  - The values of the dictionary are dictionaries with the number of crashes and the number of collisions that occurred during and near the trip.
+
+- clusters_df creates a pandas dataframe which groups crashes and the date of the crash to show that a car crash leads to more car crashes.
+
+- Analysis of traffic events' effect on taxi trips
+  - 
