@@ -122,15 +122,26 @@ def two_random_zones(neighbor_dict: dict):
 
 def trips_during_events_avg_time(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closures_df: pd.DataFrame,
                                  closure_zones_df: pd.DataFrame):
+    """
+    Shows the statistics for fare amount, trip time, and average speed for taxi trips that pass a traffic event
+    and those that do not.
+    :param trips_df: pandas dataframe of taxi trips data
+    :param crashes_df: pandas dataframe of car crashes data
+    :param closures_df: pandas dataframe of road closure data
+    :param closure_zones_df: pandas dataframe of road closure zones data
+    """
+
     trips_during_events = fc.events_during_trips(trips_df, crashes_df, closures_df, closure_zones_df)
-    during_events_mask = [trips_during_events[trips_df['tripID']]['num_of_crashes_passed'] > 0 |
-                          trips_during_events[trips_df['tripID']]['num_of_road_closures_passed'] > 0]
+    trips_during_events_df = pd.DataFrame.from_dict(trips_during_events, orient='index')
+    merged_df = trips_df.merge(trips_during_events_df, left_on='tripID', right_index=True, how='left')
 
-    taxi_data_during_events = trips_df.mask(during_events_mask)
-    taxi_data_not_during_events = trips_df.mask(~during_events_mask)
-    print(taxi_data_during_events[['fare_amount', 'trip_time_h', 'avg_speed']].describe())
-    print(taxi_data_not_during_events[['fare_amount', 'trip_time_h', 'avg_speed']].describe())
+    during_events_mask = (merged_df['num_of_crashes_passed'] > 0) | (merged_df['num_of_road_closures_passed'] > 0)
 
+    taxi_data_during_events = merged_df[during_events_mask]
+    taxi_data_not_during_events = merged_df[~during_events_mask]
+
+    print(taxi_data_during_events[['fare_amount', 'trip_time_h', 'avg speed']].describe())
+    print(taxi_data_not_during_events[['fare_amount', 'trip_time_h', 'avg speed']].describe())
 
 if __name__ == '__main__':
 
@@ -152,6 +163,7 @@ if __name__ == '__main__':
     # crashes = fc.crash_file_setup("2018_crashes.csv", nyc_taxi_geo)
     crashes = fc.open_file("Crash_zones.csv")
     crashes = datetime_conversions(crashes, ['CRASH DATE_CRASH TIME'], '%Y-%m-%d %H:%M:%S')
+
 
     clusters_df = c.cluster_crashes(crashes)
     print(clusters_df.groupby(by=['Date', 'ZONE']).count().sort_values('index_x', ascending=False))
