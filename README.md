@@ -71,6 +71,7 @@ In main.py:
   - The values of the dictionary are dictionaries with the number of crashes and the number of collisions that occurred during and near the trip.
 
 - clusters_df creates a pandas dataframe which groups crashes and the date of the crash to show that a car crash leads to more car crashes.
+- The clustering dataframe is printed to show car crashes do in fact cluster.
 
 - Analysis of traffic events' effect on taxi trips
   - Process:
