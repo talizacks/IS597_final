@@ -3,22 +3,11 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import networkx as nx
 
-# def map_events_to_zones(nyc_taxi_geo: gpd.GeoDataFrame, crashes: pd.DataFrame, closures: pd.DataFrame):
-#     """
-#     Maps crashes and closures to
-#     :param nyc_taxi_geo:
-#     :param crashes:
-#     :param closures:
-#     :return:
-#     """
 
-
-def zone_center():
-    pass
 
 def plot_routes_for_random_addresses_in_2_zones(gdf: gpd.GeoDataFrame, zone1: int, zone2: int):
     """
-
+    Plots shortest route between two random points on map given their zones
     :param gdf: nyc geopandas GeoDataFrame
     :param zone1: integer value of Pickup (PU) zone
     :param zone2: integer value of Drop Off (DO) zone
