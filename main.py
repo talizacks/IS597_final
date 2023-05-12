@@ -149,7 +149,7 @@ if __name__ == '__main__':
     clustered = c.cluster_clusters(clusters_df, nyc_taxi_geo)
 
     random_zones = two_random_zones(neighbors)
-    #viz.plot_routes_for_random_addresses_in_2_zones(nyc_taxi_geo, random_zones[0], random_zones[1])
+    viz.plot_routes_for_random_addresses_in_2_zones(nyc_taxi_geo, random_zones[0], random_zones[1])
 
 
     # set up for collision data
