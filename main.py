@@ -31,9 +31,9 @@ def find_neighbors(gdf: gpd.GeoDataFrame) -> dict:
 
 def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
     """
-
-    :param df:
-    :param neighbor_dict:
+    Get rid of trips that go beyond a neighboring zone
+    :param df: taxi trip DataFrame
+    :param neighbor_dict: dictionary of zones and their neighbors
     :return:
     """
     trips_zones_dict = {}
@@ -68,10 +68,6 @@ def filter_trips_based_on_zones(df:pd.DataFrame, neighbor_dict: dict):
 
 
 def datetime_conversions(df: pd.DataFrame, column_names: list, time_format: str) -> pd.DataFrame:
-    """
-
-    :return:
-    """
     for column in column_names:
         df[column] = pd.to_datetime(df[column], format=time_format)
     return df
@@ -96,8 +92,8 @@ def add_time_and_speed(df: pd.DataFrame) -> pd.DataFrame:
 
 def removeWeirdTaxiData(df: pd.DataFrame) -> pd.DataFrame:
     """
-
-    :return:
+    Remove unlikely rows based on avg speed and trip length (time)
+    :return: cleaned DataFrame
     """
     too_quick = df['trip_time_h'] >= 0.01666666667      # less than a minute
     df = df[too_quick]
@@ -110,7 +106,12 @@ def removeWeirdTaxiData(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def two_random_zones(neighbor_dict):
+def two_random_zones(neighbor_dict: dict):
+    """
+    Select a random zone with neighbors and randomly select one of its neighboring zones
+    :param neighbor_dict: dictionary containing all zones and their neighbors
+    :return: two random zones
+    """
     zones_with_neighbors = []
     for x in neighbor_dict:
         if neighbor_dict[x] != []:
@@ -120,6 +121,15 @@ def two_random_zones(neighbor_dict):
     zone2 = np.random.choice(neighbor_dict[zone1])
     return zone1, zone2
 
+def trips_during_events_avg_time(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closures_df: pd.DataFrame,
+                                 closure_zones_df: pd.DataFrame):
+    trips_during_events = fc.events_during_trips(trips_df, crashes_df, closures_df, closure_zones_df)
+    during_events_mask = [trips_during_events[trips_df['tripID']]['num_of_crashes_passed'] > 0 |
+                          trips_during_events[trips_df['tripID']]['num_of_road_closures_passed'] > 0]
+
+    taxi_data_during_events = trips_df.mask(during_events_mask)
+    taxi_data_not_during_events = trips_df.mask(~during_events_mask)
+    print(taxi_data_during_events.groupby('PULocation')[['fare_amount', 'trip_time_h', 'avg_speed']].describe())
 
 if __name__ == '__main__':
 
@@ -158,3 +168,6 @@ if __name__ == '__main__':
     closure_zones = fc.open_file("closure_zones.csv")
     closures = datetime_conversions(closures, ['WORK_START_DATE', 'WORK_END_DATE'],
                                     '%Y-%m-%d %H:%M:%S')
+    trips_during_events = fc.events_during_trips(taxi_data, crashes, closures, closure_zones)
+
+

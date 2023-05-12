@@ -13,7 +13,7 @@ https://data.cityofnewyork.us/Transportation/2018-Yellow-Taxi-Trip-Data/t29m-gsk
 ### Collisions:
 - Downloaded from:
 https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95/
-- Filtered to include collisions from only 2018 and 
+- Filtered to include collisions from only 2018 
 - Path: 
   - 2018_crashes.csv
 
