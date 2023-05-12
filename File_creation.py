@@ -254,14 +254,14 @@ def taxi_file_setup(taxi_path):
     return taxi_data
 
 
-def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closures_df: pd.DataFrame, closure_zones_df: pd.DataFrame) -> list:
+def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closures_df: pd.DataFrame, closure_zones_df: pd.DataFrame) -> dict:
     """
     Finds the number of events which occurred at within an hour time interval and same zone as a taxi trip
     :param trips_df: pandas dataframe of taxi trips data
     :param crashes_df: pandas dataframe of car crashes data
     :param closures_df: pandas dataframe of road closure data
     :param closure_zones_df: pandas dataframe of road closure zones data
-    :return: a list containing dictuinaries of each trip ID, the number of crashes passed, and the number of road closures passed.
+    :return: A dictionary containing trip ID as the key and a dictionary with the number of crashes and road closures passed as values..
     >>> trips = pd.DataFrame({
     ...     'tripID': [1, 2],
     ...     'PULocationID': [10, 20],
@@ -283,11 +283,12 @@ def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closur
     ...     'SEGMENTID': [100, 200]
     ... })
     >>> events_during_trips(trips, crash, close, close_zone)
-    [{'tripID': 1, 'num_of_crashes_passed': 1, 'num_of_road_closures_passed': 1}, {'tripID': 2, 'num_of_crashes_passed': 0, 'num_of_road_closures_passed': 1}]
+    {1: {'num_of_crashes_passed': 1, 'num_of_road_closures_passed': 1}, 2: {'num_of_crashes_passed': 0, 'num_of_road_closures_passed': 1}}
     """
-    events_encountered = []
+    events_encountered = {}
     for index, trip in trips_df.iterrows():
-        events_passed = {'tripID': trip['tripID'], 'num_of_crashes_passed': 0, 'num_of_road_closures_passed': 0}
+        trip_id = trip['tripID']
+        events_passed = {'num_of_crashes_passed': 0, 'num_of_road_closures_passed': 0}
 
         zone1 = trip["PULocationID"]
         zone2 = trip["DOLocationID"]
@@ -311,7 +312,7 @@ def events_during_trips(trips_df: pd.DataFrame, crashes_df: pd.DataFrame, closur
                                                       on="SEGMENTID", how="inner")
         events_passed["num_of_road_closures_passed"] = len(rows_with_zone_and_time_collisions)
 
-        events_encountered.append(events_passed)
+        events_encountered[trip_id] = events_passed
     return events_encountered
 
 
