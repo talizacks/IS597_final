@@ -5,10 +5,15 @@
 ### Taxi trips:
 - Downloaded from: 
 https://data.cityofnewyork.us/Transportation/2018-Yellow-Taxi-Trip-Data/t29m-gskq/ 
-- 12 files (1 for each month) exists in taxi.zip
-- Unzip file and run combine_taxi_dfs in File_creation.py to sample 50,000 taxi trips from each month, combine the DataFrames, and save the result as a csv
+- If you want to run this from the beginning, I recommend using the NYC Open Data explorer, filter the data by month, and then download all 12 files
+- Put those 12 files into a directory called 'taxi'
+- Run combine_taxi_dfs in File_creation.py
+  - This function will:
+    - sample 50,000 taxi trips from each month
+    - Combine the DataFrames
+    - Save the result as a csv
 - New file will be saved as: 
-  - combined_taxi_2018_200k_sample.csv
+  - sampled_combined_taxi_2018_600k.csv
 
 ### Collisions:
 - Downloaded from:
